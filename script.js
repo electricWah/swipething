@@ -2,35 +2,40 @@ console.log("working ok");
 c = document.getElementById("canvas");
 x = c.getContext("2d");
 
-//x.fillRect(100, 100, 100, 200);
+var rangeN = (length, start=0) => [ ...Array(length-start).keys() ].map(i => i+start);
 
-letters = [];
-
-t = document.querySelector("table");
-
-let tr = document.createElement("tr");
-tr.innerHTML = "<th> </th>";
-for(let i=0; i < 8; i++){
-	let th = document.createElement("th");
-	th.innerText = i.toString();
-	tr.appendChild(th);
-}
-t.appendChild(tr);
-
-for(let i=0; i < 8; i++){
+var tables = document.getElementById("tables");
+function makeTable(rowLabels, colLabels, array){
+	let t = document.createElement("table");
+	tables.appendChild(t);
 	let tr = document.createElement("tr");
-	let th = document.createElement("th");
-	th.innerText = i.toString();
-	tr.appendChild(th);
-	letters[i] = [];
-	for(let j=0; j < 8; j++){
-		let td = document.createElement("td");
-		letters[i][j] = String.fromCharCode(65+j + 8*i);
-		td.innerText = letters[i][j];
-		tr.appendChild(td);
+	tr.innerHTML = "<th> </th>";
+	for (let i = 0; i < colLabels.length; i++) {
+		let th = document.createElement("th");
+		th.innerText = colLabels[i];
+		tr.appendChild(th);
 	}
 	t.appendChild(tr);
+
+	for (let i = 0; i < array.length; i++) {
+		let tr = document.createElement("tr");
+		let th = document.createElement("th");
+		th.innerText = rowLabels[i];
+		tr.appendChild(th);
+		for (let j = 0; j < array[0].length; j++) {
+			let td = document.createElement("td");
+			td.innerText = array[i][j];;
+			tr.appendChild(td);
+		}
+		t.appendChild(tr);
+	}
+	return t;
 }
+
+var letters = rangeN(8).map(x => rangeN(8).map(y=>String.fromCharCode(x*8+y+65)))
+makeTable(rangeN(8), rangeN(8), letters);
+
+var splitAngle = (angle, dirnum) => Math.floor(((angle/Math.PI + 1 + 1/dirnum)/2)%1 * dirnum);
 
 function getIndicesOf(searchStr, str, caseSensitive) {
     var searchStrLen = searchStr.length;
@@ -50,36 +55,13 @@ function getIndicesOf(searchStr, str, caseSensitive) {
     return indices;
 }
 
+
 // var alphabet= ["EST N A ","BCDFGHJK","PQUVWXYZ","12345678"];
 var alphabet= ["  ETAOI ","BCDFGHJK","LMNPQRSU","VWXYZ. 3"]; //fast bottoms
 //var prefixes=new Array("",alphabet[0].indexOf(" "),alphabet[0].lastIndexOf(" ")) 
 var prefixes = [" "];
 prefixes = [" "].concat(getIndicesOf(" ", alphabet[0]));
-
-t2 = document.querySelectorAll("table")[1];
-
-tr = document.createElement("tr");
-tr.innerHTML = "<th> </th>";
-for(let i=0; i < 8; i++){
-	let th = document.createElement("th");
-	th.innerText = i.toString();
-	tr.appendChild(th);
-}
-t2.appendChild(tr);
-
-for(let i = 0; i < alphabet.length; i++){
-	let tr = document.createElement("tr");
-	let th = document.createElement("th");
-	th.innerText = prefixes[i];
-	tr.appendChild(th);
-	for(j of alphabet[i]){
-		let td = document.createElement("td");
-		td.innerText = j;
-		tr.appendChild(td);
-	}
-	t2.appendChild(tr);
-}
-
+makeTable(prefixes, rangeN(8), alphabet);
 
 function straddle(message){
   var out=""
@@ -125,17 +107,43 @@ drawBackground();
 
 start = {};
 c.addEventListener("mousedown", (e) => {
-	start = {}	
+	console.log(e.button);
+	switch(e.button){
+		case 0:
+			start = {};
+			start.x = e.x;
+			start.y = e.y;
+			break;
+		case 2:
+			clear();
+			break;
+	}
+});
+
+c.addEventListener("touchstart", (e) => {
+	start = {};
 	start.x = e.x;
 	start.y = e.y;
 });
 
-
 end = {};
 c.addEventListener("mouseup", (e) => {
+	switch (e.button) {
+		case 0:
+			end.x = e.x;
+			end.y = e.y;
+			handleswipe(start, end);
+			break;
+	}
+});
+
+c.addEventListener("touchend", (e) => {
 	end.x = e.x;
 	end.y = e.y;
 	handleswipe(start, end);
+});
+c.addEventListener("contextmenu", (e) => {
+	e.preventDefault();
 });
 /*
 c.addEventListener("mousemove", (e) => {
@@ -181,6 +189,22 @@ var straddledHandler = (()=>{
 	})
 })();
 
+var boxesLetters = rangeN(4).map(x=>rangeN(8).map(y=>String.fromCharCode(x*8+y+97)));
+makeTable(rangeN(4), rangeN(8), boxesLetters);
+var boxesHandler = (()=>{
+	return (function (startcoord, endcoord, dir, angle){
+		//let dir = splitAngle(angle, 4)
+		//let swipe = new Swipe(startcoord, endcoord, dir);
+		let row = startcoord[1] * 2 + startcoord[0];
+		console.log(startcoord, dir);
+		let text = boxesLetters[row][dir];
+		console.log(text, row);
+		out.innerText += text;
+		
+	})
+})();
+
+//var box_letters = 
 var gridHandler = (()=>{
 	var [swipe1, swipe2] = [null, null];
 	return (function (startcoord, endcoord, dir){
@@ -198,22 +222,6 @@ var gridHandler = (()=>{
 	})
 })();
 
-var boxesHandler = (()=>{
-	var [swipe1, swipe2] = [null, null];
-	return (function (startcoord, endcoord, dir){
-		let swipe = new Swipe(startcoord, endcoord, dir);
-		if(!swipe1){
-			swipe1 = swipe;
-		} else if(!swipe2){
-			swipe2 = swipe;
-			console.log(letters[swipe1.dir][swipe2.dir], "boxes");
-			out.innerText += letters[swipe1.dir][swipe2.dir];
-			
-			swipe1 = null;
-			swipe2 = null;
-		}
-	})
-})();
 let handlers = {
 	"straddled": straddledHandler,
 	"grid": gridHandler,
@@ -263,15 +271,15 @@ function handleswipe(start, end){
 	} else {
 		endcoord[1] = 1;
 	}
-	var dir = Math.atan2(end.x - start.x, end.y - start.y);
-	var dirnum = Math.floor((dir/(2*Math.PI) + .5 + (1/16))%1 * 8);
+	var angle = Math.atan2(end.x - start.x, end.y - start.y);
+	var dir = splitAngle(angle, 8);
 	output.innerText = "Start: " + startcoord + " (" + start.x + ", " + start.y + ")\n";
 	output.innerText += "End: " + endcoord + " (" + start.x + ", " + start.y + ")\n";	
-	output.innerText += "angle: " + dir;
-	output.innerText += "\ndirnum:" + dirnum;
+	output.innerText += "angle: " + angle;
+	output.innerText += "\ndirnum:" + dir;
 	//output.innerText += "\ndirnum:" + Math.floor((dir/(2*Math.PI) + .5 + .125)%1 * 8);
 	//handleCoord(startcoord, endcoord, dir);
-	handleLetter(startcoord, endcoord, dirnum);
+	handleLetter(startcoord, endcoord, dir, angle);
 }
 
 function clear(){

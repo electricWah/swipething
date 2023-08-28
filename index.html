@@ -17,9 +17,13 @@
 		}
 		th, td {
 		  float: none;
+		  text-align: center;
 		}
 		form {
 			display: inline-block;
+		}
+		#tables {
+			display:inline;
 		}
 	</style>
 </head>
@@ -31,8 +35,9 @@
 		<button onClick="window.clear()">Clear</button>
 		<form>
 		</form>
-		<table style="border: solid black 1px"></table>
-		<table style="border: solid black 1px"></table>
+		<div id="tables">
+			<table style="border: solid black 1px"></table>
+		</div>
 	</span>
 	<p id="coords">test</p>
 	<p id="letters">test</p>
