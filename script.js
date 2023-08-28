@@ -149,7 +149,7 @@ function Swipe(start, end, dir){
 // straddled handler
 var out = document.getElementById("letters");
 var caps = false;
-var handleLetter = (()=>{
+var straddledHandler = (()=>{
 	var [swipe1, swipe2] = [null, null];
 	return (function (startcoord, endcoord, dir){
 		let swipe = new Swipe(startcoord, endcoord, dir);
@@ -180,13 +180,8 @@ var handleLetter = (()=>{
 		}
 	})
 })();
-function print(str){
-	out.innerHTML += caps ? str.toUpperCase() : str.toLowerCase();
-}
 
-/*
-var out = document.getElementById("letters");
-var handleLetter = (()=>{
+var gridHandler = (()=>{
 	var [swipe1, swipe2] = [null, null];
 	return (function (startcoord, endcoord, dir){
 		let swipe = new Swipe(startcoord, endcoord, dir);
@@ -202,7 +197,42 @@ var handleLetter = (()=>{
 		}
 	})
 })();
-*/
+
+var boxesHandler = (()=>{
+	var [swipe1, swipe2] = [null, null];
+	return (function (startcoord, endcoord, dir){
+		let swipe = new Swipe(startcoord, endcoord, dir);
+		if(!swipe1){
+			swipe1 = swipe;
+		} else if(!swipe2){
+			swipe2 = swipe;
+			console.log(letters[swipe1.dir][swipe2.dir], "boxes");
+			out.innerText += letters[swipe1.dir][swipe2.dir];
+			
+			swipe1 = null;
+			swipe2 = null;
+		}
+	})
+})();
+let handlers = {
+	"straddled": straddledHandler,
+	"grid": gridHandler,
+	"boxes": boxesHandler,
+};
+var form = document.querySelector("form");
+for(i in handlers){
+	form.innerHTML += '<input type="radio" id="'+i+'" name="handler" value="'+i+'" checked="true">\n';
+	form.innerHTML += '<label for="'+i+'">'+i+'</label><br/>\n';
+}
+function handleLetter(...args){
+	return handlers[document.querySelector('input[name="handler"]:checked').value](...args);
+}
+function print(str){
+	out.innerHTML += caps ? str.toUpperCase() : str.toLowerCase();
+}
+
+var out = document.getElementById("letters");
+
 var output = document.getElementById("coords");
 function handleswipe(start, end){
 	//clear();
